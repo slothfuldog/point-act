@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .App {
   text-align: center;
 }
@@ -35,4 +39,19 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+button{
+  background: #3e8ed0;
+  color:white;
+  font-weight: 600;
+  transition:all ease-in-out 0.2s;
+}
+
+button:hover{
+  background: #3078b3;
+}
+
+button:active{
+  background: #1c70b4;
 }

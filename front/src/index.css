@@ -11,3 +11,31 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+input[type=text]{
+  border: 1px solid rgb(209, 208, 208);
+  -webkit-transition:all ease-in-out 0.5s;
+  transition: all ease-in-out 0.2s;
+  outline:none;
+  height: 32px;
+  box-shadow: rgb(209, 208, 208) 10px;
+  margin-bottom: 4px;
+}
+
+input[type=text]:focus{
+  border: 2px solid rgb(147, 147, 241);
+}
+
+input[type=password]{
+  border: 1px solid rgb(209, 208, 208);
+  -webkit-transition:all ease-in-out 0.5s;
+  transition: all ease-in-out 0.2s;
+  outline:none;
+  height: 32px;
+  margin-bottom: 4px;
+}
+
+input[type=password]:focus{
+  border: 2px solid rgb(147, 147, 241);
+}
+
