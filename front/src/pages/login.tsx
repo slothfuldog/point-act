@@ -18,7 +18,7 @@ const Login = () =>{
             <div className="flex flex-row mt-2 ">
             <input id="check_pass" className="hover:cursor-pointer" type="checkbox" onChange={() => {handleCheck()}} /> <label htmlFor="check_pass" className="ml-2 text-sm hover:cursor-pointer">Show password</label>
             </div>
-            <button className="p-1 rounded-md w-full mt-5" >Login</button>
+            <button className="p-1 rounded-md w-full mt-5 btn-def" >Login</button>
             </div>
             </div>
         </div>

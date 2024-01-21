@@ -41,17 +41,21 @@
   }
 }
 
-button{
+.btn-def{
   background: #3e8ed0;
   color:white;
   font-weight: 600;
   transition:all ease-in-out 0.2s;
 }
 
-button:hover{
+.btn-def:hover{
   background: #3078b3;
 }
 
-button:active{
+.btn-def:active{
   background: #1c70b4;
+}
+
+.focus\:ring-cyan-300:focus {
+  --tw-ring-opacity: 0 !important;
 }

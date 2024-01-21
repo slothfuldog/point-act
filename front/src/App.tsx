@@ -9,12 +9,13 @@ import Scoring from './pages/scoring';
 
 function App() {
   const [isLogin, setIsLogin] = useState(false);
+  const [role, setRole] = useState(5)
   return (
     <div>
       <Routes>
         
         <Route path='/login' element={<Login />}/>
-        <Route path='/scoring' element={<Scoring />}/>
+        <Route path='/scoring' element={<Private isLogin={isLogin} element={<Scoring role={role} />}/>} />
         <Route path='/*' element={<Private isLogin={isLogin} element={<NotFound/>}/>} />
       </Routes>
     </div>
