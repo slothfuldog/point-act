@@ -20,6 +20,7 @@ type keepUsr struct {
 }
 
 type users entity.Usr
+type scrHis entity.ScoreHis
 
 func Login(db *sql.DB, c *fiber.Ctx) error {
 	var user users
@@ -107,4 +108,56 @@ func KeepLogin(db *sql.DB, c *fiber.Ctx) error {
 		"response": &user,
 	})
 
+}
+
+func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
+	var body *scrHis = &scrHis{}
+	var usrInf string
+	var usrInf2 string
+
+	if err := c.BodyParser(body); err != nil {
+		log.Printf("(CONTROLLERS:2001): %s", err)
+	}
+
+	queryGet := fmt.Sprintf("SELECT username FROM score_inf WHERE username = '%s'", body.Username)
+	err := db.QueryRow(queryGet).Scan(usrInf)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			queryInsrtInf := fmt.Sprintf("INSERT INTO score_his(username, total, reg_dt, updt_dt, his_tot) VALUES (%s, %d, current_date::timestamp, current_date::timestamp, 1);", body.Username, body.Trx_tot)
+
+			result, er := db.Exec(queryInsrtInf)
+			if er != nil {
+				log.Printf("(CONTOLLERS:2002): %s", er)
+			}
+
+			row1, _ := result.RowsAffected()
+			if row1 != 1 {
+				log.Printf("(CONTOLLERS:2003): Expected 1 row to be inserted.")
+			}
+
+			queryGet2 := fmt.Sprintf("SELECT username FROM score_his WHERE username = '%s'", body.Username)
+			err2 := db.QueryRow(queryGet2).Scan(usrInf2)
+			if err2 != nil {
+				if err2 == sql.ErrNoRows {
+					queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', %d, %d, current_time::timestamp, 1, %s, NULL);", body.Username, body.Trx_tot, body.Trx_tot,
+						body.Remark)
+
+					result, err := db.Exec(queryInsertHis)
+					if err != nil {
+						log.Printf("(CONTROLLERS:2004): %s", err)
+					}
+					row1, _ := result.RowsAffected()
+					if row1 != 1 {
+						log.Printf("(CONTROLLERS:2005): Expected 1 row to be inserted")
+					}
+				}
+			}
+		} else {
+			log.Printf("(CONTROLLERS:2010): %s", err)
+		}
+	} else {
+		queryUpdate := ""
+	}
+
+	return nil
 }

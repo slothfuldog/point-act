@@ -23,5 +23,6 @@
 /front/yarn-error.log*
 
 /server/.env
+/server/main.exe
 
 package.json
