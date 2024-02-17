@@ -9,25 +9,41 @@ import Scoring from './pages/scoring';
 import Axios from "axios";
 
 function App() {
-  const [isLogin, setIsLogin] = useState(false);
+  const getLocaleStorage = JSON.parse(localStorage.getItem("login") || '{}');
+  const [isLogin, setIsLogin] = useState(getLocaleStorage.isLogin ? true : false);
   const [role, setRole] = useState(5);
 
-  const keepLogin = () =>{
-    let getLocaleStorage = localStorage.getItem("p-log-43");
-    if(getLocaleStorage){
-      let res = Axios.post("localhost:3000/" + "/keep-login",{});
-
-    }
-  }
+  
 
   useEffect(() =>{
-    keepLogin();
-  }, [])
+    const keepLogin = async () =>{
+      try{
+      console.log(getLocaleStorage.username)
+      console.log("console",isLogin)
+      if(getLocaleStorage){
+        let res =  await Axios.post("http://localhost:3000/" + "keep-login",{
+          username: getLocaleStorage.username,
+          isLogin: getLocaleStorage.isLogin
+        })
+        localStorage.setItem("login", JSON.stringify(res.data.response))
+        setIsLogin(true)
+        console.log(isLogin)
+        setRole(res.data.response.role)
+        console.log(role)
+      }
+    }catch (e){
+      setIsLogin(false)
+      localStorage.removeItem("login")
+      console.log(e)
+    }
+    }
+    keepLogin()
+  }, [isLogin, getLocaleStorage, role])
   return (
     <div>
       <Routes>
         
-        <Route path='/login' element={<Login />}/>
+        <Route path='/login' element={<Login isLogin={isLogin}/>}/>
         <Route path='/scoring' element={<Private isLogin={isLogin} element={<Scoring role={role} />}/>} />
         <Route path='/*' element={<Private isLogin={isLogin} element={<NotFound/>}/>} />
       </Routes>
