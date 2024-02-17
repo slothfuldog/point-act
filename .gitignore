@@ -21,3 +21,8 @@
 /front/npm-debug.log*
 /front/yarn-debug.log*
 /front/yarn-error.log*
+
+/server/.env
+/server/main.exe
+
+package.json
