@@ -1,18 +1,75 @@
 import { FaSquareCaretRight } from "react-icons/fa6";
 import { FileInput, Modal, Tabs, TextInput } from 'flowbite-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import Axios from "axios";
 
 const Scoring = (props: { role: any }) => {
+    interface Item {
+        remark: string;
+        trx_tot: number;
+        apprv_usr: string;
+    }
     const navigate = useNavigate()
+    const getLocalStorage = JSON.parse(localStorage.getItem('login') || '{}')
+    const [count, setCount] = useState(0);
     const [openModal, setOpenModal] = useState(false);
+    const [curFilter, setCurFilter] = useState('');
     const [act, setAct] = useState("");
+    const [data, setData] = useState<Item[]>([]);
 
     const logout = () => {
         localStorage.removeItem("login")
         navigate("/login")
         window.location.reload()
     }
+
+    const getData = async (filter: number = 0) => {
+        let filters;
+        try {
+            if (filter === 0) {
+                filters = 'all'
+            }
+            else if (filter === 1) {
+                filters = 'scored'
+            }
+            else {
+                filters = 'unscored'
+            }
+            const resp = await Axios.post('http://localhost:3000/get-data', {
+                username: getLocalStorage.username,
+                role: getLocalStorage.role,
+                class: getLocalStorage.class,
+                filter: filters
+            })
+            if (resp.data.status === 200) {
+                setData(resp.data.response)
+            }
+        }
+        catch (e) {
+            console.log(e);
+            alert("NOT FOUND")
+        }
+    }
+
+    const addAct = async () => {
+        try {
+            const res = await Axios.post('http://localhost:3000/add-act', {
+                username: getLocalStorage.username,
+                remark: act
+            })
+            if (res.data.status === 200) {
+                alert("Data added")
+                setOpenModal(false)
+            }
+        }
+        catch (e) {
+            console.log(e);
+            alert("Something went wrong")
+        }
+    }
+
+    useEffect(() => { getData(0) }, [])
 
     return (
         <div>
@@ -24,7 +81,7 @@ const Scoring = (props: { role: any }) => {
                     <sub className="text-xl ml-1 mt-1" >pts</sub>
                 </div>
                 <div className="overflow-x-auto w-full">
-                    <Tabs aria-label="Default tabs" className="flex focus:border-0" style="default">
+                    <Tabs aria-label="Default tabs" className="flex focus:border-0" style="default" onActiveTabChange={(tab) => { getData(tab) }}>
                         <Tabs.Item active title="All Activities">
                             <div className="w-full">
                                 <div className="flex flex-row mt-3">
@@ -41,18 +98,23 @@ const Scoring = (props: { role: any }) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>1</td>
-                                                <td>Bowling</td>
-                                                <td>0</td>
-                                                <td>Hestia</td>
-                                            </tr>
+                                            {data.length > 0 ?
+                                                data.map((item, index) => (
+                                                    <tr>
+                                                        <td>{index + 1}</td>
+                                                        <td>{item.remark}</td>
+                                                        <td>{item.trx_tot}</td>
+                                                        <td>{item.apprv_usr}</td>
+                                                    </tr>
+                                                )) :
+                                                "NOTFOUND"
+                                            }
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </Tabs.Item>
-                        <Tabs.Item title="Scored">
+                        <Tabs.Item title="Scored" >
                             <div className="w-full">
                                 <div className="flex flex-row mt-3">
                                     <FaSquareCaretRight style={{ color: '#3078b3', height: "25px" }} /> <p className="ml-2">Scored Activities</p>
@@ -68,18 +130,23 @@ const Scoring = (props: { role: any }) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>1</td>
-                                                <td>Bowling</td>
-                                                <td>0</td>
-                                                <td>Hestia</td>
-                                            </tr>
+                                            {data.length > 0 ?
+                                                data.map((item, index) => (
+                                                    <tr>
+                                                        <td>{index + 1}</td>
+                                                        <td>{item.remark}</td>
+                                                        <td>{item.trx_tot}</td>
+                                                        <td>{item.apprv_usr}</td>
+                                                    </tr>
+                                                )) :
+                                                "NOTFOUND"
+                                            }
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </Tabs.Item>
-                        <Tabs.Item title="Unscored">
+                        <Tabs.Item title="Unscored" >
                             <div className="w-full">
                                 <div className="flex flex-row mt-3">
                                     <FaSquareCaretRight style={{ color: '#3078b3', height: "25px" }} /> <p className="ml-2">Unscored Activities</p>
@@ -95,12 +162,17 @@ const Scoring = (props: { role: any }) => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>1</td>
-                                                <td>Bowling</td>
-                                                <td>0</td>
-                                                <td>Hestia</td>
-                                            </tr>
+                                            {data.length > 0 ?
+                                                data.map((item, index) => (
+                                                    <tr>
+                                                        <td>{index + 1}</td>
+                                                        <td>{item.remark}</td>
+                                                        <td>{item.trx_tot}</td>
+                                                        <td>{item.apprv_usr}</td>
+                                                    </tr>
+                                                )) :
+                                                "NOTFOUND"
+                                            }
                                         </tbody>
                                     </table>
                                 </div>
@@ -119,13 +191,17 @@ const Scoring = (props: { role: any }) => {
                             </div>
                         </Modal.Body>
                         <Modal.Footer>
-                            <button className="p-2 rounded-md mt-5 btn-def" onClick={() => setOpenModal(false)}>I accept</button>
+                            <button className="p-2 rounded-md mt-5 btn-def" onClick={() => {
+                                addAct();
+                                setOpenModal(false);
+                                setAct("");
+                            }}>Add</button>
                             <button className="p-2 rounded-md mt-5 btn-def" style={{ color: "gray", backgroundColor: "white" }} onClick={() => {
                                 setAct("")
                                 setOpenModal(false)
                             }
                             }>
-                                Decline
+                                Cancel
                             </button>
                         </Modal.Footer>
                     </Modal>
