@@ -202,8 +202,8 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 		}
 	} else {
 
-		queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', 0, 0, now()::timestamp at time zone 'Asia/Bangkok', his_no + 1, '%s', NULL);", body.Username,
-			body.Remark)
+		queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', 0, 0, now()::timestamp at time zone 'Asia/Bangkok', (select MAX(his_no) + 1 from score_his where username = '%s'), '%s', NULL);", body.Username,
+			body.Username, body.Remark)
 
 		result, err := db.Exec(queryInsertHis)
 		if err != nil {
@@ -222,6 +222,25 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 			})
 		}
 
+		queryUpdateInf := fmt.Sprintf("UPDATE score_inf SET his_tot = (SELECT MAX(his_no) FROM score_his WHERE username = '%s'), updt_dt = now()::timestamp at time zone 'Asia/Bangkok' WHERE username = '%s'", body.Username, body.Username)
+
+		resultUp, errUp := db.Exec(queryUpdateInf)
+
+		if errUp != nil {
+			log.Printf("(CONTROLLERS:20011): %s", errUp)
+			return c.Status(401).JSON(fiber.Map{
+				"status":  401,
+				"message": "Create data failed",
+			})
+		}
+		row2, _ := resultUp.RowsAffected()
+		if row2 != 1 {
+			log.Printf("(CONTROLLERS:20012): Expected 1 row to be inserted")
+			return c.Status(401).JSON(fiber.Map{
+				"status":  401,
+				"message": "Create data failed",
+			})
+		}
 	}
 
 	return c.Status(200).JSON(fiber.Map{

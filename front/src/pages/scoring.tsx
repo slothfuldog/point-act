@@ -107,7 +107,9 @@ const Scoring = (props: { role: any }) => {
                                                         <td>{item.apprv_usr}</td>
                                                     </tr>
                                                 )) :
-                                                "NOTFOUND"
+                                                <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                    <td colSpan={4} >NOTFOUND</td>
+                                                </tr>
                                             }
                                         </tbody>
                                     </table>
@@ -139,7 +141,9 @@ const Scoring = (props: { role: any }) => {
                                                         <td>{item.apprv_usr}</td>
                                                     </tr>
                                                 )) :
-                                                "NOTFOUND"
+                                                <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                    <td colSpan={4} >NOTFOUND</td>
+                                                </tr>
                                             }
                                         </tbody>
                                     </table>
@@ -171,7 +175,9 @@ const Scoring = (props: { role: any }) => {
                                                         <td>{item.apprv_usr}</td>
                                                     </tr>
                                                 )) :
-                                                "NOTFOUND"
+                                                <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                    <td colSpan={4} >NOTFOUND</td>
+                                                </tr>
                                             }
                                         </tbody>
                                     </table>
