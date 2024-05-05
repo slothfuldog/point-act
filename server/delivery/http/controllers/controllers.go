@@ -29,7 +29,8 @@ type updtUsr struct {
 type getData struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
-	Class    string `json:"Class"`
+	Class    string `json:"class"`
+	Filter   string `json:"filter"`
 }
 
 type data struct {
@@ -103,7 +104,7 @@ func KeepLogin(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	if !body.IsLogin {
-		log.Printf("(CONTOLLERS: 1002): user has not login")
+		log.Printf("(CONTROLLERS: 1002): user has not login")
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "User has not login",
@@ -144,14 +145,14 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	queryGet := fmt.Sprintf("SELECT username FROM score_inf WHERE username = '%s'", body.Username)
-	err := db.QueryRow(queryGet).Scan(usrInf)
+	err := db.QueryRow(queryGet).Scan(&usrInf)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			queryInsrtInf := fmt.Sprintf("INSERT INTO score_inf(username, total, reg_dt, updt_dt, his_tot) VALUES (%s, 0, current_date::timestamp, current_date::timestamp, 1);", body.Username)
+			queryInsrtInf := fmt.Sprintf("INSERT INTO score_inf(username, total, reg_dt, updt_dt, his_tot) VALUES ('%s', 0, now()::timestamp at time zone 'Asia/Bangkok', now()::timestamp at time zone 'Asia/Bangkok', 1);", body.Username)
 
 			result, er := db.Exec(queryInsrtInf)
 			if er != nil {
-				log.Printf("(CONTOLLERS:2002): %s", er)
+				log.Printf("(CONTROLLERS:2002): %s", er)
 				return c.Status(401).JSON(fiber.Map{
 					"status":  401,
 					"message": "Create data failed",
@@ -160,7 +161,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 
 			row1, _ := result.RowsAffected()
 			if row1 != 1 {
-				log.Printf("(CONTOLLERS:2003): Expected 1 row to be inserted.")
+				log.Printf("(CONTROLLERS:2003): Expected 1 row to be inserted.")
 				return c.Status(401).JSON(fiber.Map{
 					"status":  401,
 					"message": "Create data failed",
@@ -168,10 +169,10 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 			}
 
 			queryGet2 := fmt.Sprintf("SELECT username FROM score_his WHERE username = '%s'", body.Username)
-			err2 := db.QueryRow(queryGet2).Scan(usrInf2)
+			err2 := db.QueryRow(queryGet2).Scan(&usrInf2)
 			if err2 != nil {
 				if err2 == sql.ErrNoRows {
-					queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', 0, 0, current_time::timestamp, 1, '%s', NULL);", body.Username,
+					queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', 0, 0, now()::timestamp at time zone 'Asia/Bangkok', 1, '%s', NULL);", body.Username,
 						body.Remark)
 
 					result, err := db.Exec(queryInsertHis)
@@ -201,7 +202,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 		}
 	} else {
 
-		queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', 0, 0, current_time::timestamp, his_no + 1, '%s', NULL);", body.Username,
+		queryInsertHis := fmt.Sprintf("INSERT INTO score_his(username, trx_tot, total, reg_dt, his_no, remark, apprv_usr) VALUES ('%s', 0, 0, now()::timestamp at time zone 'Asia/Bangkok', his_no + 1, '%s', NULL);", body.Username,
 			body.Remark)
 
 		result, err := db.Exec(queryInsertHis)
@@ -266,7 +267,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	if usrInf2 != "" {
-		log.Printf("(CONTOLLERS:3003): Already approved")
+		log.Printf("(CONTROLLERS:3003): Already approved")
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Already approved",
@@ -279,7 +280,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	result, err := db.Exec(queryUpdate)
 
 	if err != nil {
-		log.Printf("(CONTOLLERS:3004): %s", err)
+		log.Printf("(CONTROLLERS:3004): %s", err)
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Create data failed",
@@ -333,11 +334,21 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	if body.Role == "0" || body.Role == "99" {
-		querySelect := fmt.Sprintf("SELECT username, trx_tot, remark, apprv_usr FROM FROM score_his a INNER JOIN bsc_usr_inf b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99')", body.Class)
+		querySelect := fmt.Sprintf("SELECT username, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his a INNER JOIN bsc_usr_inf b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99')", body.Class)
+
+		if body.Filter == "scored" {
+			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
+		} else if body.Filter == "unscored" {
+			querySelect = fmt.Sprintf("%s AND (total = 0 OR total IS NULL)", querySelect)
+		}
 
 		rows, err := db.Query(querySelect)
 		if err != nil {
 			log.Printf("(CONTROlLERS:4002): %s", err)
+			return c.Status(404).JSON(fiber.Map{
+				"status":  404,
+				"message": "Data Not Found",
+			})
 		}
 		for rows.Next() {
 			var data2 *data = &data{}
@@ -348,10 +359,23 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 			data1 = append(data1, *data2)
 		}
 	} else {
-		querySelect := fmt.Sprintf("SELECT * FROM score_his WHERE username = %s", body.Username)
+		querySelect := fmt.Sprintf("SELECT username, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his WHERE username = '%s'", body.Username)
+
+		if body.Filter == "scored" {
+			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
+		} else if body.Filter == "unscored" {
+			querySelect = fmt.Sprintf("%s AND (total = 0 OR total IS NULL)", querySelect)
+		}
+
+		log.Printf("%s", querySelect)
+
 		rows, err := db.Query(querySelect)
 		if err != nil {
 			log.Printf("(CONTROlLERS:4003): %s", err)
+			return c.Status(401).JSON(fiber.Map{
+				"status":  404,
+				"message": "Data Not Found",
+			})
 		}
 		for rows.Next() {
 			var data2 *data = &data{}
