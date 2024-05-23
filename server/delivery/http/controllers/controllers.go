@@ -408,7 +408,7 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	if body.Role == "1" || body.Role == "99" {
-		querySelect := fmt.Sprintf("SELECT a.username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his a INNER JOIN bsc_usr_inf b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99')", body.Class)
+		querySelect := fmt.Sprintf("SELECT b.username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his AS a INNER JOIN bsc_usr_inf AS b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99')", body.Class)
 
 		if body.Filter == "scored" {
 			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
@@ -433,7 +433,7 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 			data1 = append(data1, *data2)
 		}
 	} else {
-		querySelect := fmt.Sprintf("SELECT a.username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his WHERE username = '%s'", body.Username)
+		querySelect := fmt.Sprintf("SELECT username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his WHERE username = '%s'", body.Username)
 
 		if body.Filter == "scored" {
 			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
