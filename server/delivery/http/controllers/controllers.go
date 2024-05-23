@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"point/domain/entity"
+	com "point/infrastructure/functions"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -48,7 +49,7 @@ func Login(db *sql.DB, c *fiber.Ctx) error {
 	var body *usr = &usr{}
 
 	if err := c.BodyParser(body); err != nil {
-		log.Printf("(CONTROLLERS:0001): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:0001): %s", err))
 	}
 
 	var available int
@@ -59,7 +60,8 @@ func Login(db *sql.DB, c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == sql.ErrNoRows || available == 0 {
-			log.Printf("(CONTROLLERS:0002): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:0002): %s", err))
+			log.Printf("Check")
 			return c.Status(400).JSON(fiber.Map{
 				"status":  400,
 				"message": "Username or password not found",
@@ -75,7 +77,7 @@ func Login(db *sql.DB, c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("(CONTROLLERS:0003): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:0003): %s", err))
 			return c.Status(400).JSON(fiber.Map{
 				"status":  400,
 				"message": "Username or password not found",
@@ -96,7 +98,7 @@ func KeepLogin(db *sql.DB, c *fiber.Ctx) error {
 	var body *keepUsr = &keepUsr{}
 
 	if err := c.BodyParser(body); err != nil {
-		log.Printf("(CONTROLLERS:1001): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:1001): %s", err))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Request invalid",
@@ -104,7 +106,7 @@ func KeepLogin(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	if !body.IsLogin {
-		log.Printf("(CONTROLLERS: 1002): user has not login")
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS: 1002): user has not login"))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "User has not login",
@@ -117,7 +119,7 @@ func KeepLogin(db *sql.DB, c *fiber.Ctx) error {
 		&user.Role, &user.Reg_dt, &user.Updt_dt, &user.Sts)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("(CONTROLLERS:1003): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:1003): %s", err))
 			user.IsLogin = false
 			return c.Status(400).JSON(fiber.Map{
 				"status":  400,
@@ -141,7 +143,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 	var usrInf2 string
 
 	if err := c.BodyParser(body); err != nil {
-		log.Printf("(CONTROLLERS:2001): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:2001): %s", err))
 	}
 
 	queryGet := fmt.Sprintf("SELECT username FROM score_inf WHERE username = '%s'", body.Username)
@@ -152,7 +154,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 
 			result, er := db.Exec(queryInsrtInf)
 			if er != nil {
-				log.Printf("(CONTROLLERS:2002): %s", er)
+				com.PrintLog(fmt.Sprintf("(CONTROLLERS:2002): %s", er))
 				return c.Status(401).JSON(fiber.Map{
 					"status":  401,
 					"message": "Create data failed",
@@ -161,7 +163,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 
 			row1, _ := result.RowsAffected()
 			if row1 != 1 {
-				log.Printf("(CONTROLLERS:2003): Expected 1 row to be inserted.")
+				com.PrintLog(fmt.Sprintf("(CONTROLLERS:2003): Expected 1 row to be inserted."))
 				return c.Status(401).JSON(fiber.Map{
 					"status":  401,
 					"message": "Create data failed",
@@ -177,7 +179,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 
 					result, err := db.Exec(queryInsertHis)
 					if err != nil {
-						log.Printf("(CONTROLLERS:2004): %s", err)
+						com.PrintLog(fmt.Sprintf("(CONTROLLERS:2004): %s", err))
 						return c.Status(401).JSON(fiber.Map{
 							"status":  401,
 							"message": "Create data failed",
@@ -185,7 +187,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 					}
 					row1, _ := result.RowsAffected()
 					if row1 != 1 {
-						log.Printf("(CONTROLLERS:2005): Expected 1 row to be inserted")
+						com.PrintLog(fmt.Sprintf("(CONTROLLERS:2005): Expected 1 row to be inserted"))
 						return c.Status(401).JSON(fiber.Map{
 							"status":  401,
 							"message": "Create data failed",
@@ -194,7 +196,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 				}
 			}
 		} else {
-			log.Printf("(CONTROLLERS:2010): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:2010): %s", err))
 			return c.Status(401).JSON(fiber.Map{
 				"status":  401,
 				"message": err,
@@ -207,7 +209,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 
 		result, err := db.Exec(queryInsertHis)
 		if err != nil {
-			log.Printf("(CONTROLLERS:20011): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:20011): %s", err))
 			return c.Status(401).JSON(fiber.Map{
 				"status":  401,
 				"message": "Create data failed",
@@ -215,7 +217,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 		}
 		row1, _ := result.RowsAffected()
 		if row1 != 1 {
-			log.Printf("(CONTROLLERS:20012): Expected 1 row to be inserted")
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:2012): Expected 1 row to be inserted"))
 			return c.Status(401).JSON(fiber.Map{
 				"status":  401,
 				"message": "Create data failed",
@@ -227,7 +229,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 		resultUp, errUp := db.Exec(queryUpdateInf)
 
 		if errUp != nil {
-			log.Printf("(CONTROLLERS:20011): %s", errUp)
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:20011): %s", errUp))
 			return c.Status(401).JSON(fiber.Map{
 				"status":  401,
 				"message": "Create data failed",
@@ -235,7 +237,7 @@ func InsertActivities(db *sql.DB, c *fiber.Ctx) error {
 		}
 		row2, _ := resultUp.RowsAffected()
 		if row2 != 1 {
-			log.Printf("(CONTROLLERS:20012): Expected 1 row to be inserted")
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:20012): Expected 1 row to be inserted"))
 			return c.Status(401).JSON(fiber.Map{
 				"status":  401,
 				"message": "Create data failed",
@@ -255,7 +257,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	var usrInf2 string
 
 	if err := c.BodyParser(body); err != nil {
-		log.Printf("(CONTROLLERS:3001): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3001): %s", err))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Invalid request",
@@ -266,7 +268,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	err := db.QueryRow(queryGet).Scan(usrInf)
 
 	if err != nil {
-		log.Printf("(CONTROLLERS:3002): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3002): %s", err))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "User not found",
@@ -278,7 +280,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	errs := db.QueryRow(queryGet2).Scan(usrInf2)
 
 	if errs != nil && errs != sql.ErrNoRows {
-		log.Printf("(CONTROLLERS:3002): %s", errs)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3002): %s", errs))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Get data failed",
@@ -286,7 +288,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	}
 
 	if usrInf2 != "" {
-		log.Printf("(CONTROLLERS:3003): Already approved")
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3003): Already approved"))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Already approved",
@@ -299,7 +301,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	result, err := db.Exec(queryUpdate)
 
 	if err != nil {
-		log.Printf("(CONTROLLERS:3004): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3004): %s", err))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Create data failed",
@@ -309,7 +311,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	res, _ := result.RowsAffected()
 
 	if res != 1 {
-		log.Printf("(CONTROLLERS:3005) : Expected update 1 row")
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3005) : Expected update 1 row"))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Create data failed",
@@ -321,7 +323,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	rest, er := db.Exec(queryUpdate2)
 
 	if er != nil {
-		log.Printf("(CONTROLLERS:3006): %s", er)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3006): %s", er))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Create data failed",
@@ -331,7 +333,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	res2, _ := rest.RowsAffected()
 
 	if res2 != 1 {
-		log.Printf("(CONTROLLERS:3007) : Expected update 1 row")
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3007) : Expected update 1 row"))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Create data failed",
@@ -349,7 +351,7 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 	var data1 []data = []data{}
 
 	if err := c.BodyParser(body); err != nil {
-		log.Printf("(CONTROLLERS:4001): %s", err)
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:4001): %s", err))
 	}
 
 	if body.Role == "0" || body.Role == "99" {
@@ -363,7 +365,7 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 
 		rows, err := db.Query(querySelect)
 		if err != nil {
-			log.Printf("(CONTROlLERS:4002): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROlLERS:4002): %s", err))
 			return c.Status(404).JSON(fiber.Map{
 				"status":  404,
 				"message": "Data Not Found",
@@ -386,11 +388,11 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 			querySelect = fmt.Sprintf("%s AND (total = 0 OR total IS NULL)", querySelect)
 		}
 
-		log.Printf("%s", querySelect)
+		com.PrintLog(fmt.Sprintf("%s", querySelect))
 
 		rows, err := db.Query(querySelect)
 		if err != nil {
-			log.Printf("(CONTROlLERS:4003): %s", err)
+			com.PrintLog(fmt.Sprintf("(CONTROlLERS:4003): %s", err))
 			return c.Status(401).JSON(fiber.Map{
 				"status":  404,
 				"message": "Data Not Found",

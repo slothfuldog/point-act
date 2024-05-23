@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	com "point/infrastructure/functions"
+
 	"github.com/joho/godotenv"
 )
 
@@ -33,6 +35,8 @@ func NewDatabaseConnect(dir string) *sql.DB {
 	}
 
 	fmt.Println("Database is successfully connected")
+
+	com.PrintLog("Database is successfully connected")
 
 	return db
 }

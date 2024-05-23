@@ -24,5 +24,6 @@
 
 /server/.env
 /server/main.exe
+/server/logs/*
 
 package.json

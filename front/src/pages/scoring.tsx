@@ -14,6 +14,7 @@ const Scoring = (props: { role: any }) => {
     const getLocalStorage = JSON.parse(localStorage.getItem('login') || '{}')
     const [count, setCount] = useState(0);
     const [openModal, setOpenModal] = useState(false);
+    const [role, setRole] = useState("");
     const [curFilter, setCurFilter] = useState('');
     const [act, setAct] = useState("");
     const [data, setData] = useState<Item[]>([]);
@@ -52,6 +53,10 @@ const Scoring = (props: { role: any }) => {
         }
     }
 
+    const approve = async() => {
+        
+    }
+
     const addAct = async () => {
         try {
             const res = await Axios.post('http://localhost:3000/add-act', {
@@ -71,15 +76,29 @@ const Scoring = (props: { role: any }) => {
 
     useEffect(() => { getData(0) }, [])
 
+    useEffect(() => {
+        setRole(getLocalStorage.role)
+    }, [getLocalStorage])
+
     return (
         <div>
             <p className="flex flex-row justify-end text-blue-500 hover:cursor-pointer active:text-blue-700" onClick={logout}>logout</p>
             <div className=" w-3/4 h-screen pt-24 m-auto flex flex-col items-start">
-                <div className="flex flex-row" id="Title">
-                    <p className="text-4xl">{props.role === 5 ? "Your Score" : "View Your Score"}</p>
-                    <p className="text-4xl font-semibold ml-3" style={{ color: "#3078b3" }}>0</p>
-                    <sub className="text-xl ml-1 mt-1" >pts</sub>
-                </div>
+                {
+                    getLocalStorage.role == "5" ?
+                       <div className="flex flex-row" id="Title">
+                           <p className="text-4xl">View Your Score</p>
+                           <p className="text-4xl font-semibold ml-3" style={{ color: "#3078b3" }}>0</p>
+                           <sub className="text-xl ml-1 mt-1" >pts</sub>
+                       </div>
+                : getLocalStorage.role == "1" ?
+                       <div className="flex flex-row" id="Title">
+                          <p className="text-4xl">You have {} activity to confirm</p>
+                       </div>
+                : <div className="flex flex-row" id="Title">
+                          <p className="text-4xl">You can check</p>
+                       </div>}
+                
                 <div className="overflow-x-auto w-full">
                     <Tabs aria-label="Default tabs" className="flex focus:border-0" style="default" onActiveTabChange={(tab) => { getData(tab) }}>
                         <Tabs.Item active title="All Activities">
