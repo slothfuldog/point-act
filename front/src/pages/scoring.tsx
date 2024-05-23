@@ -1,5 +1,5 @@
 import { FaSquareCaretRight } from "react-icons/fa6";
-import { FileInput, Modal, Tabs, TextInput } from 'flowbite-react';
+import { Button, FileInput, Modal, Tabs, TextInput } from 'flowbite-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import Axios from "axios";
@@ -7,6 +7,8 @@ import Axios from "axios";
 const Scoring = (props: { role: any }) => {
     interface Item {
         remark: string;
+        username: string;
+        his_no: number;
         trx_tot: number;
         apprv_usr: string;
     }
@@ -14,10 +16,13 @@ const Scoring = (props: { role: any }) => {
     const getLocalStorage = JSON.parse(localStorage.getItem('login') || '{}')
     const [count, setCount] = useState(0);
     const [openModal, setOpenModal] = useState(false);
+    const [approveModal, setApproveModal] = useState(false);
     const [role, setRole] = useState("");
     const [curFilter, setCurFilter] = useState('');
+    const [score, setScore] = useState(0);
     const [act, setAct] = useState("");
     const [data, setData] = useState<Item[]>([]);
+    const [apprData, setApprData] = useState<Item>();
 
     const logout = () => {
         localStorage.removeItem("login")
@@ -53,8 +58,23 @@ const Scoring = (props: { role: any }) => {
         }
     }
 
-    const approve = async() => {
-        
+    const approve = async () => {
+        try {
+            const res = await Axios.post('http://localhost:3000/approve', {
+                approver: getLocalStorage.username,
+                username: apprData?.username,
+                his_no: apprData?.his_no,
+                trx_tot: score
+
+            })
+            if (res.data.status === 200) {
+                alert("Successfully add point")
+            }
+        }
+        catch (e) {
+            alert("SOMETHING WENT WRONG")
+            console.log(e)
+        }
     }
 
     const addAct = async () => {
@@ -85,20 +105,20 @@ const Scoring = (props: { role: any }) => {
             <p className="flex flex-row justify-end text-blue-500 hover:cursor-pointer active:text-blue-700" onClick={logout}>logout</p>
             <div className=" w-3/4 h-screen pt-24 m-auto flex flex-col items-start">
                 {
-                    getLocalStorage.role == "5" ?
-                       <div className="flex flex-row" id="Title">
-                           <p className="text-4xl">View Your Score</p>
-                           <p className="text-4xl font-semibold ml-3" style={{ color: "#3078b3" }}>0</p>
-                           <sub className="text-xl ml-1 mt-1" >pts</sub>
-                       </div>
-                : getLocalStorage.role == "1" ?
-                       <div className="flex flex-row" id="Title">
-                          <p className="text-4xl">You have {} activity to confirm</p>
-                       </div>
-                : <div className="flex flex-row" id="Title">
-                          <p className="text-4xl">You can check</p>
-                       </div>}
-                
+                    getLocalStorage.role === "5" ?
+                        <div className="flex flex-row" id="Title">
+                            <p className="text-4xl">View Your Score</p>
+                            <p className="text-4xl font-semibold ml-3" style={{ color: "#3078b3" }}>0</p>
+                            <sub className="text-xl ml-1 mt-1" >pts</sub>
+                        </div>
+                        : getLocalStorage.role === "1" ?
+                            <div className="flex flex-row" id="Title">
+                                <p className="text-4xl">You have { } activity to confirm</p>
+                            </div>
+                            : <div className="flex flex-row" id="Title">
+                                <p className="text-4xl">You can check</p>
+                            </div>}
+
                 <div className="overflow-x-auto w-full">
                     <Tabs aria-label="Default tabs" className="flex focus:border-0" style="default" onActiveTabChange={(tab) => { getData(tab) }}>
                         <Tabs.Item active title="All Activities">
@@ -107,31 +127,95 @@ const Scoring = (props: { role: any }) => {
                                     <FaSquareCaretRight style={{ color: '#3078b3', height: "25px" }} /> <p className="ml-2">All Activities</p>
                                 </div>
                                 <div id="Work-his" className=" mt-4 border border-2 border-slate-300 relative overflow-x-auto shadow-lg sm:rounded-lg ">
-                                    <table className="w-full text-sm text-left text-center">
-                                        <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
-                                            <tr>
-                                                <th>History No.</th>
-                                                <th>Activities</th>
-                                                <th>Score</th>
-                                                <th>Supervisor</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {data.length > 0 ?
-                                                data.map((item, index) => (
-                                                    <tr>
-                                                        <td>{index + 1}</td>
-                                                        <td>{item.remark}</td>
-                                                        <td>{item.trx_tot}</td>
-                                                        <td>{item.apprv_usr}</td>
-                                                    </tr>
-                                                )) :
-                                                <tr style={{ textAlign: "center", verticalAlign: "center" }}>
-                                                    <td colSpan={4} >NOTFOUND</td>
+                                    {role === "5" ?
+                                        <table className="w-full text-sm text-left text-center">
+                                            <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
+                                                <tr>
+                                                    <th>History No.</th>
+                                                    <th>Activities</th>
+                                                    <th>Score</th>
+                                                    <th>Supervisor</th>
                                                 </tr>
-                                            }
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {data.length > 0 ?
+                                                    data.map((item, index) => (
+                                                        <tr>
+                                                            <td>{index + 1}</td>
+                                                            <td>{item.remark}</td>
+                                                            <td>{item.trx_tot}</td>
+                                                            <td>{item.apprv_usr}</td>
+                                                        </tr>
+                                                    )) :
+                                                    <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                        <td colSpan={4} >NOTFOUND</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                        :
+                                        role === "1" ?
+                                            <table className="w-full text-sm text-left text-center">
+                                                <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
+                                                    <tr>
+                                                        <th>History No.</th>
+                                                        <th>Activities</th>
+                                                        <th>Score</th>
+                                                        <th>Supervisor</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {data.length > 0 ?
+                                                        data.map((item, index) => (
+                                                            <tr>
+                                                                <td>{index + 1}</td>
+                                                                <td>{item.remark}</td>
+                                                                <td>{item.trx_tot}</td>
+                                                                <td>{item.apprv_usr}</td>
+                                                                <td>{item.apprv_usr === 'NOT APPROVED' ? <button className="p-2 rounded-md mt-1 mb-1 btn-def" onClick={() => {
+                                                                    setApprData(item)
+                                                                    setApproveModal(true)
+                                                                }}>Approve</button> : <button className="p-2 rounded-md mt-1 mb-1 btn-def" onClick={() => {
+                                                                    setApprData(item)
+                                                                    setApproveModal(true)
+                                                                }}>Edit</button>}</td>
+                                                            </tr>
+                                                        )) :
+                                                        <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                            <td colSpan={4} >NOTFOUND</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                            :
+                                            <table className="w-full text-sm text-left text-center">
+                                                <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
+                                                    <tr>
+                                                        <th>History No.</th>
+                                                        <th>Activities</th>
+                                                        <th>Score</th>
+                                                        <th>Supervisor</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {data.length > 0 ?
+                                                        data.map((item, index) => (
+                                                            <tr>
+                                                                <td>{index + 1}</td>
+                                                                <td>{item.remark}</td>
+                                                                <td>{item.trx_tot}</td>
+                                                                <td>{item.apprv_usr}</td>
+                                                            </tr>
+                                                        )) :
+                                                        <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                            <td colSpan={4} >NOTFOUND</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                    }
+
                                 </div>
                             </div>
                         </Tabs.Item>
@@ -224,6 +308,32 @@ const Scoring = (props: { role: any }) => {
                             <button className="p-2 rounded-md mt-5 btn-def" style={{ color: "gray", backgroundColor: "white" }} onClick={() => {
                                 setAct("")
                                 setOpenModal(false)
+                            }
+                            }>
+                                Cancel
+                            </button>
+                        </Modal.Footer>
+                    </Modal>
+                    <Modal show={approveModal} onClose={() => setApproveModal(false)}>
+                        <Modal.Header>Give the score</Modal.Header>
+                        <Modal.Body>
+                            <div className="space-y-6">
+                                <TextInput type="number" onChange={e => {
+                                    if (parseInt(e.target.value) > 100) {
+                                        e.target.value = "100"
+                                    }
+                                    setScore(parseInt(e.target.value))
+                                }}></TextInput>
+                            </div>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <button className="p-2 rounded-md mt-5 btn-def" onClick={() => {
+                                approve()
+                                setApproveModal(false);
+                                setScore(0);
+                            }}>Approve</button>
+                            <button className="p-2 rounded-md mt-5 btn-def" style={{ color: "gray", backgroundColor: "white" }} onClick={() => {
+                                setApproveModal(false)
                             }
                             }>
                                 Cancel

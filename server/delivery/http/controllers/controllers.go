@@ -39,6 +39,7 @@ type data struct {
 	Trx_tot   string `json:"trx_tot"`
 	Remark    string `json:"remark"`
 	Apprv_usr string `json:"apprv_usr"`
+	His_no    int    `json:"his_no"`
 }
 
 type users entity.Usr
@@ -255,6 +256,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	var body *updtUsr = &updtUsr{}
 	var usrInf string
 	var usrInf2 string
+	var scoreHis int
 
 	if err := c.BodyParser(body); err != nil {
 		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3001): %s", err))
@@ -264,8 +266,25 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 		})
 	}
 
+	com.PrintLog(fmt.Sprintf("Approver   =    [%s]", body.Approver))
+	com.PrintLog(fmt.Sprintf("Username   =    [%s]", body.Username))
+	com.PrintLog(fmt.Sprintf("His_no     =    [%d]", body.His_no))
+	com.PrintLog(fmt.Sprintf("Trx_tot    =    [%d]", body.Trx_tot))
+
+	queryGet1 := fmt.Sprintf("SELECT trx_tot FROM score_his WHERE username = '%s' AND his_no = %d", body.Username, body.His_no)
+
+	errss := db.QueryRow(queryGet1).Scan(&scoreHis)
+
+	if errss != nil && errss != sql.ErrNoRows {
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3011): %s", errss))
+		return c.Status(401).JSON(fiber.Map{
+			"status":  401,
+			"message": "Get data failed",
+		})
+	}
+
 	queryGet := fmt.Sprintf("SELECT username FROM bsc_usr_inf WHERE username = '%s'", body.Approver)
-	err := db.QueryRow(queryGet).Scan(usrInf)
+	err := db.QueryRow(queryGet).Scan(&usrInf)
 
 	if err != nil {
 		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3002): %s", err))
@@ -275,52 +294,84 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 		})
 	}
 
-	queryGet2 := fmt.Sprintf("SELECT approver FROM score_his WHERE username = '%s' AND his_no = %d", body.Username, body.His_no)
+	queryGet2 := fmt.Sprintf("SELECT COALESCE(apprv_usr,'') FROM score_his WHERE username = '%s' AND his_no = %d", body.Username, body.His_no)
 
-	errs := db.QueryRow(queryGet2).Scan(usrInf2)
+	errs := db.QueryRow(queryGet2).Scan(&usrInf2)
 
 	if errs != nil && errs != sql.ErrNoRows {
-		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3002): %s", errs))
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3011): %s", errs))
 		return c.Status(401).JSON(fiber.Map{
 			"status":  401,
 			"message": "Get data failed",
 		})
 	}
 
-	if usrInf2 != "" {
-		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3003): Already approved"))
-		return c.Status(401).JSON(fiber.Map{
-			"status":  401,
-			"message": "Already approved",
-		})
+	// if usrInf2 != "" {
+	// 	com.PrintLog(fmt.Sprintf("(CONTROLLERS:3003): Already approved"))
+	// 	return c.Status(401).JSON(fiber.Map{
+	// 		"status":  401,
+	// 		"message": "Already approved",
+	// 	})
 
+	// }
+
+	if scoreHis < 1 {
+		queryUpdate := fmt.Sprintf("UPDATE score_inf SET total = (SELECT total FROM score_inf WHERE username = '%s') + %d WHERE username = '%s'", body.Username, body.Trx_tot, body.Username)
+
+		result, err := db.Exec(queryUpdate)
+
+		com.PrintLog(fmt.Sprintf("%s", queryUpdate))
+
+		if err != nil {
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:3004): %s", err))
+			return c.Status(401).JSON(fiber.Map{
+				"status":  401,
+				"message": "Create data failed",
+			})
+		}
+
+		res, _ := result.RowsAffected()
+
+		if res != 1 {
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:3005) : Expected update 1 row"))
+			com.PrintLog(fmt.Sprintf("Effected Row   = [%d]", res))
+			return c.Status(401).JSON(fiber.Map{
+				"status":  401,
+				"message": "Create data failed",
+			})
+		}
+	} else {
+		queryUpdate := fmt.Sprintf("UPDATE score_inf SET total = (SELECT total FROM score_inf WHERE username = '%s') - %d + %d WHERE username = '%s'", body.Username, scoreHis, body.Trx_tot, body.Username)
+
+		result, err := db.Exec(queryUpdate)
+
+		com.PrintLog(fmt.Sprintf("%s", queryUpdate))
+
+		if err != nil {
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:3004): %s", err))
+			return c.Status(401).JSON(fiber.Map{
+				"status":  401,
+				"message": "Create data failed",
+			})
+		}
+
+		res, _ := result.RowsAffected()
+
+		if res != 1 {
+			com.PrintLog(fmt.Sprintf("(CONTROLLERS:3005) : Expected update 1 row"))
+			com.PrintLog(fmt.Sprintf("Effected Row   = [%d]", res))
+			return c.Status(401).JSON(fiber.Map{
+				"status":  401,
+				"message": "Create data failed",
+			})
+		}
 	}
 
-	queryUpdate := fmt.Sprintf("UPDATE score_inf SET total = total + %d WHERE username = '%s' AND his_no = %d", body.Trx_tot, body.Username, body.His_no)
-
-	result, err := db.Exec(queryUpdate)
-
-	if err != nil {
-		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3004): %s", err))
-		return c.Status(401).JSON(fiber.Map{
-			"status":  401,
-			"message": "Create data failed",
-		})
-	}
-
-	res, _ := result.RowsAffected()
-
-	if res != 1 {
-		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3005) : Expected update 1 row"))
-		return c.Status(401).JSON(fiber.Map{
-			"status":  401,
-			"message": "Create data failed",
-		})
-	}
-
-	queryUpdate2 := fmt.Sprintf("UPDATE score_his SET trx_tot = %d, total = total + %d, app WHERE username = '%s' AND his_no = %d", body.Trx_tot, body.Trx_tot, body.Username, body.His_no)
+	queryUpdate2 := fmt.Sprintf("UPDATE score_his SET trx_tot = %d, total = total + %d, apprv_usr = '%s' WHERE username = '%s' AND his_no = %d", body.Trx_tot, body.Trx_tot, body.Approver, body.Username, body.His_no)
 
 	rest, er := db.Exec(queryUpdate2)
+
+	com.PrintLog(fmt.Sprintf("%s", queryUpdate2))
 
 	if er != nil {
 		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3006): %s", er))
@@ -350,12 +401,14 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 	var body *getData = &getData{}
 	var data1 []data = []data{}
 
+	com.PrintLog(fmt.Sprintf("=========GetData START======"))
+
 	if err := c.BodyParser(body); err != nil {
 		com.PrintLog(fmt.Sprintf("(CONTROLLERS:4001): %s", err))
 	}
 
-	if body.Role == "0" || body.Role == "99" {
-		querySelect := fmt.Sprintf("SELECT username, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his a INNER JOIN bsc_usr_inf b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99')", body.Class)
+	if body.Role == "1" || body.Role == "99" {
+		querySelect := fmt.Sprintf("SELECT a.username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his a INNER JOIN bsc_usr_inf b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99')", body.Class)
 
 		if body.Filter == "scored" {
 			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
@@ -373,14 +426,14 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 		}
 		for rows.Next() {
 			var data2 *data = &data{}
-			if err := rows.Scan(&data2.Username, &data2.Trx_tot, &data2.Remark,
+			if err := rows.Scan(&data2.Username, &data2.His_no, &data2.Trx_tot, &data2.Remark,
 				&data2.Apprv_usr); err != nil {
 				return err
 			}
 			data1 = append(data1, *data2)
 		}
 	} else {
-		querySelect := fmt.Sprintf("SELECT username, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his WHERE username = '%s'", body.Username)
+		querySelect := fmt.Sprintf("SELECT a.username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his WHERE username = '%s'", body.Username)
 
 		if body.Filter == "scored" {
 			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
@@ -400,7 +453,7 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 		}
 		for rows.Next() {
 			var data2 *data = &data{}
-			if err := rows.Scan(&data2.Username, &data2.Trx_tot, &data2.Remark,
+			if err := rows.Scan(&data2.Username, &data2.His_no, &data2.Trx_tot, &data2.Remark,
 				&data2.Apprv_usr); err != nil {
 				return err
 			}
