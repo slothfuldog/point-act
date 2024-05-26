@@ -20,6 +20,7 @@ const Scoring = (props: { role: any }) => {
     const [role, setRole] = useState("");
     const [curFilter, setCurFilter] = useState('');
     const [score, setScore] = useState(0);
+    const [total, setTotal] = useState(0);
     const [act, setAct] = useState("");
     const [data, setData] = useState<Item[]>([]);
     const [apprData, setApprData] = useState<Item>();
@@ -50,6 +51,7 @@ const Scoring = (props: { role: any }) => {
             })
             if (resp.data.status === 200) {
                 setData(resp.data.response)
+                setTotal(resp.data.total)
             }
         }
         catch (e) {
@@ -108,12 +110,12 @@ const Scoring = (props: { role: any }) => {
                     getLocalStorage.role === "5" ?
                         <div className="flex flex-row" id="Title">
                             <p className="text-4xl">View Your Score</p>
-                            <p className="text-4xl font-semibold ml-3" style={{ color: "#3078b3" }}>0</p>
+                            <p className="text-4xl font-semibold ml-3" style={{ color: "#3078b3" }}>{total}</p>
                             <sub className="text-xl ml-1 mt-1" >pts</sub>
                         </div>
                         : getLocalStorage.role === "1" ?
                             <div className="flex flex-row" id="Title">
-                                <p className="text-4xl">You have { } activity to confirm</p>
+                                <p className="text-4xl">You have {total} activity to confirm</p>
                             </div>
                             : <div className="flex flex-row" id="Title">
                                 <p className="text-4xl">You can check</p>

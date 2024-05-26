@@ -257,6 +257,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 	var usrInf string
 	var usrInf2 string
 	var scoreHis int
+	var scoreInf int
 
 	if err := c.BodyParser(body); err != nil {
 		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3001): %s", err))
@@ -367,7 +368,18 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 		}
 	}
 
-	queryUpdate2 := fmt.Sprintf("UPDATE score_his SET trx_tot = %d, total = total + %d, apprv_usr = '%s' WHERE username = '%s' AND his_no = %d", body.Trx_tot, body.Trx_tot, body.Approver, body.Username, body.His_no)
+	queryGets := fmt.Sprintf("SELECT total FROM score_inf WHERE username = '%s'", body.Username)
+	errors := db.QueryRow(queryGets).Scan(&scoreInf)
+
+	if errors != nil {
+		com.PrintLog(fmt.Sprintf("(CONTROLLERS:3002): %s", errors))
+		return c.Status(401).JSON(fiber.Map{
+			"status":  401,
+			"message": "User not found",
+		})
+	}
+
+	queryUpdate2 := fmt.Sprintf("UPDATE score_his SET trx_tot = %d, total = %d, apprv_usr = '%s' WHERE username = '%s' AND his_no = %d", body.Trx_tot, scoreInf, body.Approver, body.Username, body.His_no)
 
 	rest, er := db.Exec(queryUpdate2)
 
@@ -400,6 +412,7 @@ func ApproveActivities(db *sql.DB, c *fiber.Ctx) error {
 func GetData(db *sql.DB, c *fiber.Ctx) error {
 	var body *getData = &getData{}
 	var data1 []data = []data{}
+	var total int
 
 	com.PrintLog(fmt.Sprintf("=========GetData START======"))
 
@@ -432,13 +445,23 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 			}
 			data1 = append(data1, *data2)
 		}
+		querySelect2 := fmt.Sprintf("SELECT count(1) FROM score_his AS a INNER JOIN bsc_usr_inf AS b ON a.username = b.username WHERE b.class = '%s' AND b.role not in ('0', '99') AND (trx_tot = 0 OR trx_tot IS NULL)", body.Class)
+
+		errs := db.QueryRow(querySelect2).Scan(&total)
+		if errs != nil {
+			com.PrintLog(fmt.Sprintf("(CONTROlLERS:4033): %s", errs))
+			return c.Status(404).JSON(fiber.Map{
+				"status":  404,
+				"message": "Data Not Found",
+			})
+		}
 	} else {
 		querySelect := fmt.Sprintf("SELECT username, his_no, trx_tot, remark, COALESCE(apprv_usr, 'NOT APPROVED') FROM score_his WHERE username = '%s'", body.Username)
 
 		if body.Filter == "scored" {
-			querySelect = fmt.Sprintf("%s AND total <> 0", querySelect)
+			querySelect = fmt.Sprintf("%s AND trx_tot <> 0", querySelect)
 		} else if body.Filter == "unscored" {
-			querySelect = fmt.Sprintf("%s AND (total = 0 OR total IS NULL)", querySelect)
+			querySelect = fmt.Sprintf("%s AND (trx_tot = 0 OR trx_tot IS NULL)", querySelect)
 		}
 
 		com.PrintLog(fmt.Sprintf("%s", querySelect))
@@ -459,10 +482,21 @@ func GetData(db *sql.DB, c *fiber.Ctx) error {
 			}
 			data1 = append(data1, *data2)
 		}
+		querySelect2 := fmt.Sprintf("SELECT total FROM score_inf WHERE username ='%s' ", body.Username)
+
+		errs := db.QueryRow(querySelect2).Scan(&total)
+		if errs != nil {
+			com.PrintLog(fmt.Sprintf("(CONTROlLERS:4044): %s", errs))
+			return c.Status(404).JSON(fiber.Map{
+				"status":  404,
+				"message": "Data Not Found",
+			})
+		}
 	}
 
 	return c.Status(200).JSON(fiber.Map{
 		"status":   200,
 		"response": &data1,
+		"total":    &total,
 	})
 }
