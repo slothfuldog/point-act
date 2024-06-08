@@ -260,32 +260,95 @@ const Scoring = (props: { role: any }) => {
                                 <div className="flex flex-row mt-3">
                                     <FaSquareCaretRight style={{ color: '#3078b3', height: "25px" }} /> <p className="ml-2">Unscored Activities</p>
                                 </div>
-                                <div id="Work-un" className=" mt-4 border border-2 border-slate-300 relative overflow-x-auto shadow-lg sm:rounded-lg ">
-                                    <table className="w-full text-sm text-left text-center">
-                                        <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
-                                            <tr>
-                                                <th>History No.</th>
-                                                <th>Activities</th>
-                                                <th>Score</th>
-                                                <th>Supervisor</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {data.length > 0 ?
-                                                data.map((item, index) => (
-                                                    <tr>
-                                                        <td>{index + 1}</td>
-                                                        <td>{item.remark}</td>
-                                                        <td>{item.trx_tot}</td>
-                                                        <td>{item.apprv_usr}</td>
-                                                    </tr>
-                                                )) :
-                                                <tr style={{ textAlign: "center", verticalAlign: "center" }}>
-                                                    <td colSpan={4} >NOTFOUND</td>
+                                <div id="Work-un" >
+                                    {role === "5" ?
+                                        <table className="w-full text-sm text-left text-center">
+                                            <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
+                                                <tr>
+                                                    <th>History No.</th>
+                                                    <th>Activities</th>
+                                                    <th>Score</th>
+                                                    <th>Supervisor</th>
                                                 </tr>
-                                            }
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {data.length > 0 ?
+                                                    data.map((item, index) => (
+                                                        <tr>
+                                                            <td>{index + 1}</td>
+                                                            <td>{item.remark}</td>
+                                                            <td>{item.trx_tot}</td>
+                                                            <td>{item.apprv_usr}</td>
+                                                        </tr>
+                                                    )) :
+                                                    <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                        <td colSpan={4} >NOTFOUND</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                        :
+                                        role === "1" ?
+                                            <table className="w-full text-sm text-left text-center">
+                                                <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
+                                                    <tr>
+                                                        <th>History No.</th>
+                                                        <th>Activities</th>
+                                                        <th>Score</th>
+                                                        <th>Supervisor</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {data.length > 0 ?
+                                                        data.map((item, index) => (
+                                                            <tr>
+                                                                <td>{index + 1}</td>
+                                                                <td>{item.remark}</td>
+                                                                <td>{item.trx_tot}</td>
+                                                                <td>{item.apprv_usr}</td>
+                                                                <td>{item.apprv_usr === 'NOT APPROVED' ? <button className="p-2 rounded-md mt-1 mb-1 btn-def" onClick={() => {
+                                                                    setApprData(item)
+                                                                    setApproveModal(true)
+                                                                }}>Approve</button> : <button className="p-2 rounded-md mt-1 mb-1 btn-def" onClick={() => {
+                                                                    setApprData(item)
+                                                                    setApproveModal(true)
+                                                                }}>Edit</button>}</td>
+                                                            </tr>
+                                                        )) :
+                                                        <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                            <td colSpan={4} >NOTFOUND</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                            :
+                                            <table className="w-full text-sm text-left text-center">
+                                                <thead className=" text-white uppercase" style={{ background: "#3078b3" }}>
+                                                    <tr>
+                                                        <th>History No.</th>
+                                                        <th>Activities</th>
+                                                        <th>Score</th>
+                                                        <th>Supervisor</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {data.length > 0 ?
+                                                        data.map((item, index) => (
+                                                            <tr>
+                                                                <td>{index + 1}</td>
+                                                                <td>{item.remark}</td>
+                                                                <td>{item.trx_tot}</td>
+                                                                <td>{item.apprv_usr}</td>
+                                                            </tr>
+                                                        )) :
+                                                        <tr style={{ textAlign: "center", verticalAlign: "center" }}>
+                                                            <td colSpan={4} >NOTFOUND</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                    }
                                 </div>
                             </div>
                         </Tabs.Item>
